@@ -1,16 +1,16 @@
-from flask import Flask, render_template, request
-from flask_sqlalchemy import SQLAlchemy
-import pymysql
+from flask import Flask, render_template, request, jsonify
 # 导入实体类
-from entity.entity import Users, Beiwanglu
+from entity.entity import *
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:15263080731@127.0.0.1:3306/todo'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# 兼容py3，要导入pymysql
-pymysql.install_as_MySQLdb()
-db = SQLAlchemy(app)
+# from entity.entity import Users, Beiwanglu
+# app = Flask(__name__)
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:15263080731@127.0.0.1:3306/todo'
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+#
+# # 兼容py3，要导入pymysql
+# pymysql.install_as_MySQLdb()
+# db = SQLAlchemy(app)
 
 
 '''
@@ -26,6 +26,7 @@ def index():
 '''
 @app.route('/adduser', methods=['GET','POST'])
 def add_user():
+
 
     name = request.values.get('username')
     phonenum = request.values.get('phonenum')
@@ -77,6 +78,7 @@ def check_user():
 '''
 @app.route('/findpassword', methods=['GET', 'POST'])
 def find_password():
+
     name = request.values.get('username')
     phonenum = request.values.get('phonenum')
 
@@ -113,6 +115,72 @@ def add_beiwanglu():
         return 'success'
     except:
 
+        return 'fail'
+
+'''
+返回该用户备忘录
+'''
+@app.route('/returnbeiwanglu', methods=['GET', 'POST'])
+def return_beiwang():
+
+    name = request.values.get('username')
+    beiwanglu = Beiwanglu.query.filter(Beiwanglu.username == name).all()
+
+    payload = []
+
+    if beiwanglu:
+
+        for re in beiwanglu:
+            content = {'username': re.username, 'tip': re.tip, 'date': re.date,
+                       'time': str(re.time), 'content': re.content,
+                       'complete': re.complete, 'id': re.id}
+            payload.append(content)
+
+        return jsonify(payload)
+    else:
+        return 'null'
+
+'''
+更新某用户备忘录
+'''
+@app.route('/updatebeiwanglu', methods=['GET', 'POST'])
+def update_beiwang():
+
+
+    update = request.values.get('update')   # 要执行的操作
+    name = request.values.get('username')
+    id = request.values.get('id')
+
+    print(name, id)
+    # 先获取再修改提交
+    beiwanglu = Beiwanglu.query.filter(Beiwanglu.username == name, Beiwanglu.id == id).first()
+
+    print(beiwanglu)
+    if beiwanglu:
+        # 完成
+        if update=='complete':
+            beiwanglu.complete=True
+            db.session.commit()
+        # 撤销
+        elif update=='back':
+            beiwanglu.complete = False
+            db.session.commit()
+        # 修改
+        elif update=='update':
+
+            beiwanglu.content = request.values.get('content')
+            beiwanglu.tip = bool(int(request.values.get('tip')))
+
+            beiwanglu.date = request.values.get('date')
+            beiwanglu.time = request.values.get('time')
+            db.session.commit()
+        # 删除
+        else:
+            db.session.delete(beiwanglu)
+            db.session.commit()
+
+        return 'success'
+    else:
         return 'fail'
 
 
