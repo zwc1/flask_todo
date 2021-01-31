@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, jsonify
 # 导入实体类
 from entity.entity import *
-
-
+import requests
+import json
+import time
 # from entity.entity import Users, Beiwanglu
 # app = Flask(__name__)
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:15263080731@127.0.0.1:3306/todo'
@@ -12,14 +13,17 @@ from entity.entity import *
 # pymysql.install_as_MySQLdb()
 # db = SQLAlchemy(app)
 
+# 全局变量用于存token及上一次获取的时间,有效期(s)
+global token, expires_in
+old_time=0
 
 '''
 首页
 '''
 @app.route('/')
 def index():
-    # return 'hello world'
-    return render_template("index.html")
+    return 'hello world'
+    # return render_template("index.html")
 
 '''
 插入用户信息（注册）
@@ -31,9 +35,23 @@ def add_user():
     name = request.values.get('username')
     phonenum = request.values.get('phonenum')
     password = request.values.get('password')
+    nickname = request.values.get('nickname')
+    url = request.values.get('url')
+    code = request.values.get('code')
+    # print(code, name)
+    # 调用api获取openid
+    url = 'https://api.weixin.qq.com/sns/jscode2session?appid=wx869f84b17b6897e0&secret=4f85f84bb001b83e6bb3c3e95597307e' \
+          '&js_code='+code+'&grant_type=authorization_code'
 
-    # 实例化一个实体，插入表中
-    user = Users(name, phonenum, password)
+    response = requests.get(url)
+    # 将获取到的json字符串转为字典
+    dict_json = json.loads(response.content)
+
+    openid = dict_json['openid']
+
+
+    # # 实例化一个实体，插入表中
+    user = Users(name, phonenum, password, nickname, url, openid)
     db.session.add(user)
 
     try :
@@ -183,7 +201,28 @@ def update_beiwang():
     else:
         return 'fail'
 
+'''
+调用微信接口获取access_token，用于调用发送消息的api
+token有效期为7200s，使用时，先根据当前时间判断token是否有效，有则用，无则调用该函数获取
+'''
+def get_data():
+
+    # 修改全局变量时需先声明一下
+    global token, old_time, expires_in
+
+    url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=wx869f84b17b6897e0&secret=4f85f84bb001b83e6bb3c3e95597307e'
+    response =  requests.get(url)
+    # 将获取到的json字符串转为字典
+    dict_json = json.loads(response.content)
+    # 获取到的token
+    token = dict_json['access_token']
+    # 当前的时间戳(s)
+    old_time = time.time()
+    # 有效期(s)
+    expires_in = dict_json['expires_in']
+
 
 if __name__ == '__main__':
+
 
     app.run(debug=True)

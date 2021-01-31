@@ -18,11 +18,16 @@ class Users(db.Model):
     username = db.Column(db.String(255), primary_key = True)
     phonenum = db.Column(db.String(255))
     password = db.Column(db.String(255))
-
-    def __init__(self, name, phone, password):
+    nickname = db.Column(db.String(255))
+    url = db.Column(db.String(255))
+    openid = db.Column(db.String(255))
+    def __init__(self, name, phone, password, nickname, url, openid):
         self.username = name
         self.phonenum = phone
         self.password = password
+        self.nickname = nickname
+        self.url = url
+        self.openid = openid
 
 # 创建备忘录实体类
 class Beiwanglu(db.Model):
