@@ -20,7 +20,7 @@ class Users(db.Model):
     password = db.Column(db.String(255))
     nickname = db.Column(db.String(255))
     url = db.Column(db.String(255))
-    openid = db.Column(db.String(255))
+    openid = db.Column(db.String(255), unique=True)
     def __init__(self, name, phone, password, nickname, url, openid):
         self.username = name
         self.phonenum = phone

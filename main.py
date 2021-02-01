@@ -1,22 +1,17 @@
 from flask import Flask, render_template, request, jsonify
+from flask_apscheduler import APScheduler
 # 导入实体类
 from entity.entity import *
 import requests
 import json
 import time
-# from entity.entity import Users, Beiwanglu
-# app = Flask(__name__)
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:15263080731@127.0.0.1:3306/todo'
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-#
-# # 兼容py3，要导入pymysql
-# pymysql.install_as_MySQLdb()
-# db = SQLAlchemy(app)
 
 # 全局变量用于存token及上一次获取的时间,有效期(s)
-global token, expires_in
+global token
+expires_in=0
 old_time=0
-
+# 调度器
+scheduler = APScheduler()
 '''
 首页
 '''
@@ -127,9 +122,23 @@ def add_beiwanglu():
     beiwang = Beiwanglu(id, name, bool(int(tip)), date, time, content, bool(int(complete)))
     db.session.add(beiwang)
 
+    tip_time = date+' '+time+':00'
+    print(tip_time)
+    if(len(content)>25):
+        tip_content = content[0:25]+'...'
+    else:
+        tip_content = content
 
     try:
         db.session.commit()
+        # 如果需要提醒
+        if (bool(int(tip)) == True):
+            # 先获取openid
+            user = Users.query.filter(Users.username == name).first()
+            openid = user.openid
+            # 添加一个定时器
+            add_tip(openid, content, tip_time, id)
+
         return 'success'
     except:
 
@@ -209,7 +218,7 @@ def get_data():
 
     # 修改全局变量时需先声明一下
     global token, old_time, expires_in
-
+    # print('ppp')
     url = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=wx869f84b17b6897e0&secret=4f85f84bb001b83e6bb3c3e95597307e'
     response =  requests.get(url)
     # 将获取到的json字符串转为字典
@@ -221,8 +230,57 @@ def get_data():
     # 有效期(s)
     expires_in = dict_json['expires_in']
 
+'''
+下发模板消息
+'''
+def send(openid, content, date):
 
+    # 如果token失效，则重新获取
+    if(time.time()-old_time>=expires_in):
+        get_data()
+
+    url = 'https://api.weixin.qq.com/cgi-bin/message/subscribe/send?' \
+          'access_token='+token
+    # openid = 'oaBdd5M0DHnBt7j7k_75qNSro2CA'
+    # content = '32个字符以内'
+    # date = '2021-10-02'
+    data = {
+          "touser": openid,
+          "template_id": "oiX_o8XHDzPqmh8AQ0tIv7mlaMd0NhfNiS58enFjRsY",
+          "page": "index",
+          "miniprogram_state":"developer",
+          "lang":"zh_CN",
+          "data": {
+              "thing4": {
+                  "value": content
+              },
+              "time2": {
+                  "value": date
+              }
+
+          }
+        }
+    data = json.dumps(data)
+    res = requests.post(url=url, data=data)
+    print(res.text)
+
+'''
+添加定时器任务
+'''
+# @app.route('/test', methods=['GET', 'POST'])
+def add_tip(openid, content, date, id):
+
+    # openid = 'oaBdd5M0DHnBt7j7k_75qNSro2CA'
+    # content = '32个字符以内'
+    # date = '2021-10-02'
+    scheduler.add_job(func=send, id=id, trigger='date', run_date=date,
+                      args=[openid, content, date])
+
+
+    return 'success'
 if __name__ == '__main__':
 
-
+    # send()
+    scheduler.init_app(app=app)
+    scheduler.start()
     app.run(debug=True)
