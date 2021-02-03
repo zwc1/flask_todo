@@ -5,13 +5,21 @@ from entity.entity import *
 import requests
 import json
 import time
-
+from flask import current_app
 # 全局变量用于存token及上一次获取的时间,有效期(s)
 global token
 expires_in=0
 old_time=0
-# 调度器
+
+# 调度器及其配置要写在这，不要在__main__里
+class Config(object):
+    SCHEDULER_API_ENABLED = True
+
 scheduler = APScheduler()
+app.config.from_object(Config())
+scheduler.init_app(app)
+scheduler.start()
+
 '''
 首页
 '''
@@ -195,16 +203,54 @@ def update_beiwang():
         # 修改
         elif update=='update':
 
-            beiwanglu.content = request.values.get('content')
-            beiwanglu.tip = bool(int(request.values.get('tip')))
+            content = request.values.get('content')
+            tip = bool(int(request.values.get('tip')))
+            date = request.values.get('date')
+            time = request.values.get('time')
+            # 删除提醒
+            if beiwanglu.tip==True and tip==False:
+                try:
+                    current_app.apscheduler.remove_job(id)
+                except:
+                    print('no such job!')
+            # 添加提醒
+            if beiwanglu.tip==False and tip==True:
+                try:
+                    # 先获取openid
+                    user = Users.query.filter(Users.username == name).first()
+                    openid = user.openid
 
-            beiwanglu.date = request.values.get('date')
-            beiwanglu.time = request.values.get('time')
+                    tip_time = date + ' ' + time + ':00'
+                    print(tip_time)
+                    if (len(content) > 25):
+                        tip_content = content[0:25] + '...'
+                    else:
+                        tip_content = content
+                    # 添加一个定时器
+                    add_tip(openid, tip_content, tip_time, id)
+
+                except:
+                    print('no such job!')
+
+            beiwanglu.content = content
+            beiwanglu.tip = tip
+            beiwanglu.date = date
+            beiwanglu.time = time
             db.session.commit()
+
         # 删除
         else:
+            ##### 这里还要删除定时器，判断tip是否为1，根据id删除
+            if beiwanglu.tip == True:
+
+                try:
+                    current_app.apscheduler.remove_job(id)
+                except:
+                    print('no such job!')
+
             db.session.delete(beiwanglu)
             db.session.commit()
+
 
         return 'success'
     else:
@@ -264,6 +310,7 @@ def send(openid, content, date):
     res = requests.post(url=url, data=data)
     print(res.text)
 
+
 '''
 添加定时器任务
 '''
@@ -273,14 +320,12 @@ def add_tip(openid, content, date, id):
     # openid = 'oaBdd5M0DHnBt7j7k_75qNSro2CA'
     # content = '32个字符以内'
     # date = '2021-10-02'
-    scheduler.add_job(func=send, id=id, trigger='date', run_date=date,
+    # scheduler.add_job(func=send, id=id, trigger='date', run_date=date,
+    #                   args=[openid, content, date])
+    current_app.apscheduler.add_job(func=send, id=id, trigger='date', run_date=date,
                       args=[openid, content, date])
-
 
     return 'success'
 if __name__ == '__main__':
 
-    # send()
-    scheduler.init_app(app=app)
-    scheduler.start()
     app.run(debug=True)
