@@ -1,7 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import pymysql
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:15263080731@127.0.0.1:3306/todo'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -52,3 +51,43 @@ class Beiwanglu(db.Model):
         self.username = name
         self.content = content
         self.complete = complete
+
+# 创建便笺实体类
+class Bianjian(db.Model):
+    # 表名
+    __tablename__='bianjian'
+    # 表属性
+    id = db.Column(db.String(255), primary_key = True)
+    username = db.Column(db.String(255), primary_key = True)
+    date = db.Column(db.Date())
+    time = db.Column(db.Time())
+    content = db.Column(db.Text(255))
+
+
+
+    def __init__(self, id, name, date, time, content):
+
+        self.id = id
+
+        self.date = date
+        self.time = time
+        self.username = name
+        self.content = content
+
+# 创建单词实体类
+class Word(db.Model):
+    # 表名
+    __tablename__='english'
+    # 表属性
+    username = db.Column(db.String(255), primary_key = True)
+    content = db.Column(db.String(255), primary_key = True)
+    translate = db.Column(db.JSON())
+
+
+
+    def __init__(self, name, content, translate):
+
+
+        self.username = name
+        self.content = content
+        self.translate = translate
