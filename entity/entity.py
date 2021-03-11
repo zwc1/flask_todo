@@ -91,3 +91,67 @@ class Word(db.Model):
         self.username = name
         self.content = content
         self.translate = translate
+
+
+# 创建单词实体类
+class File(db.Model):
+    # 表名
+    __tablename__='userfile'
+    # 表属性
+    username = db.Column(db.String(255), primary_key = True)
+    path = db.Column(db.String(255), primary_key = True)
+    type = db.Column(db.String(255))
+    filename = db.Column(db.String(255))
+    size = db.Column(db.String(255))
+
+
+
+    def __init__(self, username, path, type, filename, size):
+
+
+        self.username = username
+        self.path = path
+        self.type = type
+        self.filename = filename
+        self.size = size
+
+
+# 创建团队实体类
+class Group(db.Model):
+    # 表名
+    __tablename__='group'
+    # 表属性
+    username = db.Column(db.String(255))
+    groupid = db.Column(db.String(8), primary_key = True)
+    groupname = db.Column(db.String(255))
+    groupdetail = db.Column(db.String(255))
+    groupurl = db.Column(db.String(255))
+    grouppw = db.Column(db.String(6))
+    number = db.Column(db.Integer())
+
+
+
+    def __init__(self, username, groupid, groupname, groupdetail, groupurl, number, grouppw):
+
+
+        self.username = username
+        self.groupid = groupid
+        self.groupdetail = groupdetail
+        self.groupurl = groupurl
+        self.number = number
+        self.groupname = groupname
+        self.grouppw = grouppw
+
+
+# 创建团队成员实体类
+class GroupMember(db.Model):
+    # 表名
+    __tablename__ = 'groupmember'
+    # 表属性
+    username = db.Column(db.String(255), primary_key=True)
+    groupid = db.Column(db.String(8), primary_key=True)
+
+    def __init__(self, username, groupid):
+        self.username = username
+        self.groupid = groupid
+
