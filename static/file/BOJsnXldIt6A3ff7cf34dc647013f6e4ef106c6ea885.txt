@@ -1,0 +1,19 @@
+    wx.request({
+      url: 'http://127.0.0.1:8080/test',
+      method: 'POST',
+      data: e.detail.userInfo,
+
+      header: {
+        'content-type': 'application/x-www-form-urlencoded' 
+      },
+      success(res){
+        console.log(res)
+      },
+      
+      fail(res){
+        console.log(res.errMsg)
+      }
+
+      
+    })
+
