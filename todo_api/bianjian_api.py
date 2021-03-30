@@ -79,7 +79,7 @@ def update_bianjian():
     bianjain = Bianjian.query.filter(Bianjian.username == name, Bianjian.id == id).first()
 
     # print(bianjain)
-    if bianjain:
+    if bianjain!=None:
 
         if update=='update':
 
@@ -114,7 +114,7 @@ def return_bianjian():
 
     payload = []
 
-    if bianjian:
+    if bianjian!=None:
 
         for re in bianjian:
             content = {'date': re.date,'time': str(re.time),

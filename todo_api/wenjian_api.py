@@ -76,7 +76,7 @@ def return_file():
 
     payload = []
 
-    if file:
+    if file!=None:
 
         for re in file:
 
@@ -105,7 +105,7 @@ def delete_file():
     file = File.query.filter(File.username == name, File.path == path).first()
 
     # print(bianjain)
-    if file:
+    if file!=None:
 
 
             db.session.delete(file)

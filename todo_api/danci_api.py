@@ -107,7 +107,7 @@ def return_word():
 
     payload = []
 
-    if word:
+    if word!=None:
 
         for re in word:
             translate = re.translate
@@ -136,7 +136,7 @@ def delete_word():
     word = Word.query.filter(Word.username == name, Word.content == content).first()
 
     # print(bianjain)
-    if word:
+    if word!=None:
 
         db.session.delete(word)
         db.session.commit()

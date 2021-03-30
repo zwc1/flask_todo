@@ -82,7 +82,7 @@ def find_password():
 
     user = Users.query.filter(Users.username == name, Users.phonenum == phonenum).first()
 
-    if user:
+    if user!=None:
         return user.password
     else:
         return 'null'

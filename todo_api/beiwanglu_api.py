@@ -73,7 +73,7 @@ def return_beiwang():
 
     payload = []
 
-    if beiwanglu:
+    if beiwanglu!=None:
 
         for re in beiwanglu:
             content = {'username': re.username, 'tip': re.tip, 'date': re.date,
@@ -100,8 +100,8 @@ def update_beiwang():
     # 先获取再修改提交
     beiwanglu = Beiwanglu.query.filter(Beiwanglu.username == name, Beiwanglu.id == id).first()
 
-    print(beiwanglu)
-    if beiwanglu:
+    # print(beiwanglu)
+    if beiwanglu!=None:
         # 完成
         if update=='complete':
             beiwanglu.complete=True
